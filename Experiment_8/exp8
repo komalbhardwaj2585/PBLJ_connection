@@ -1,1 +1,111 @@
+Part(A)
+// Course.java
+public class Course {
+    private String courseName = "Spring Framework";
+    public String getCourseName() { return courseName; }
+}
+
+// Student.java
+public class Student {
+    private Course course;
+    public Student(Course course) { this.course = course; }
+    public void display() {
+        System.out.println("Enrolled in: " + course.getCourseName());
+    }
+}
+
+// AppConfig.java
+import org.springframework.context.annotation.*;
+@Configuration
+public class AppConfig {
+    @Bean
+    public Course course() {
+        return new Course();
+    }
+
+    @Bean
+    public Student student() {
+        return new Student(course());
+    }
+}
+
+// MainApp.java
+import org.springframework.context.annotation.AnnotationConfigApplicationContext;
+public class MainApp {
+    public static void main(String[] args) {
+        AnnotationConfigApplicationContext context = new AnnotationConfigApplicationContext(AppConfig.class);
+        Student s = context.getBean(Student.class);
+        s.display();
+        context.close();
+    }
+}
+
+Part(B)
+import javax.persistence.*;
+
+@Entity
+@Table(name="student")
+public class Student {
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private int id;
+
+    @Column(name="name")
+    private String name;
+
+    @Column(name="course")
+    private String course;
+
+    // Getters & Setters
+}
+import org.hibernate.*;
+import org.hibernate.cfg.Configuration;
+
+public class HibernateUtil {
+    private static SessionFactory factory = new Configuration().configure().buildSessionFactory();
+    public static SessionFactory getSessionFactory() {
+        return factory;
+    }
+}
+
+Part(c)
+@Entity
+public class Account {
+    @Id
+    private int accNo;
+    private double balance;
+    // Getters & Setters
+}
+AccountDAO.java
+@Repository
+public class AccountDAO {
+    @Autowired
+    private SessionFactory sessionFactory;
+
+    public void update(Account acc) {
+        sessionFactory.getCurrentSession().update(acc);
+    }
+
+    public Account getAccount(int accNo) {
+        return sessionFactory.getCurrentSession().get(Account.class, accNo);
+    }
+}
+BankService.java
+@Service
+public class BankService {
+    @Autowired
+    private AccountDAO dao;
+
+    @Transactional
+    public void transfer(int fromAcc, int toAcc, double amount) {
+        Account acc1 = dao.getAccount(fromAcc);
+        Account acc2 = dao.getAccount(toAcc);
+
+        acc1.setBalance(acc1.getBalance() - amount);
+        acc2.setBalance(acc2.getBalance() + amount);
+
+        dao.update(acc1);
+        dao.update(acc2);
+    }
+}
 
